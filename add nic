@@ -1,0 +1,46 @@
+---
+- name: Configure network interfaces on host1 and host2
+  hosts: servers
+  tasks:
+    - name: Ensure the network configuration directory exists
+      file:
+        path: /etc/sysconfig/network-scripts
+        state: directory
+
+    - name: Configure eth1 interface on host1
+      when: inventory_hostname == 'host1'
+      copy:
+        dest: /etc/sysconfig/network-scripts/ifcfg-eth1
+        content: |
+          DEVICE=eth1
+          BOOTPROTO=none
+          ONBOOT=yes
+          IPADDR=10.10.100.11
+          NETMASK=255.255.255.0
+          GATEWAY=10.10.100.1
+          NM_CONTROLLED=no
+
+    - name: Configure eth1 interface on host2
+      when: inventory_hostname == 'host2'
+      copy:
+        dest: /etc/sysconfig/network-scripts/ifcfg-eth1
+        content: |
+          DEVICE=eth1
+          BOOTPROTO=none
+          ONBOOT=yes
+          IPADDR=10.10.100.12
+          NETMASK=255.255.255.0
+          GATEWAY=10.10.100.1
+          NM_CONTROLLED=no
+
+    - name: Restart networking to apply changes on host1
+      when: inventory_hostname == 'host1'
+      ansible.builtin.systemd:
+        name: network
+        state: restarted
+
+    - name: Restart networking to apply changes on host2
+      when: inventory_hostname == 'host2'
+      ansible.builtin.systemd:
+        name: network
+        state: restarted
